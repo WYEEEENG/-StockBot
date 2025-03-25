@@ -10,7 +10,7 @@ from linebot.models import (
 )
 from linebot.exceptions import InvalidSignatureError
 import stock_utils
-
+import re
 from fastapi.staticfiles import StaticFiles
 
 app.mount("/static", StaticFiles(directory="charts"), name="static")
@@ -84,7 +84,10 @@ def handle_message(event: MessageEvent):
     trigger_words = ["交易紀錄", "走勢", "圖表", "CHART", "股價圖"]
     for keyword in trigger_words:
         if keyword in msg:
-            symbol = msg.replace(keyword, "").strip()
+              # ← 放在檔案最上方（只要一次）
+
+            symbol = re.sub(rf"{keyword}", "", msg, flags=re.IGNORECASE)  # 移除關鍵字
+            symbol = re.sub(r"[^\w]", "", symbol).upper()  # 只保留英數
             chart_path = stock_utils.draw_stock_chart(symbol)
             if chart_path:
                 # 靜態圖片網址
