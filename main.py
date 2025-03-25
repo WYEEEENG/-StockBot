@@ -87,25 +87,42 @@ def handle_message(event: MessageEvent):
 def scheduled_push():
     users = load_users()
     if not users:
-        print("沒有任何使用者可以推播")
+        print("⚠️ 沒有任何使用者可以推播")
         return
 
     tw_stocks = ["2330", "0056", "0050"]
     us_stocks = ["TSLA", "VOO", "NVDA"]
     messages = []
 
+    # 產文字
     for code in tw_stocks:
         messages.append(stock_utils.get_taiwan_stock(code))
     for code in us_stocks:
         messages.append(stock_utils.get_us_stock(code))
 
-    combined = "\n\n".join(messages)
+    text_summary = "\n\n".join(messages)
 
+    # 推播給所有使用者
     for uid in users:
         try:
-            line_bot_api.push_message(uid, TextSendMessage(text=combined))
+            # 先傳文字
+            line_bot_api.push_message(uid, TextSendMessage(text=text_summary))
+
+            # 再一張一張圖傳
+            for code in tw_stocks + us_stocks:
+                img_path = stock_utils.draw_stock_chart(code)
+                if img_path:
+                    url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/static/{code}.png"
+                    line_bot_api.push_message(
+                        uid,
+                        ImageSendMessage(
+                            original_content_url=url,
+                            preview_image_url=url
+                        )
+                    )
         except Exception as e:
             print(f"推播給 {uid} 失敗：{e}")
+
 
 
 # --- 啟動排程器 ---
