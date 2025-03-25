@@ -3,7 +3,6 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import datetime
 import os
-print(f"▶️ 開始畫圖：{symbol}")
 
 def get_taiwan_stock(stock_id):
     try:
@@ -31,6 +30,7 @@ def get_us_stock(symbol):
 
 def draw_stock_chart(symbol):
     try:
+        print(f"▶️ 開始畫圖：{symbol}")
         is_tw = symbol.isdigit()
         plt.figure(figsize=(8, 4))
         today = datetime.date.today()
@@ -39,6 +39,7 @@ def draw_stock_chart(symbol):
         prices = []
 
         if is_tw:
+            print(f"🔍 抓取台股歷史資料：{symbol}")
             stock = twstock.Stock(symbol)
             hist = stock.fetch_from(today.year - 1, today.month)
             last_30 = hist[-30:]
@@ -46,6 +47,7 @@ def draw_stock_chart(symbol):
                 dates.append(d.date.strftime("%m/%d"))
                 prices.append(d.close)
         else:
+            print(f"🔍 抓取美股歷史資料：{symbol}")
             stock = yf.Ticker(symbol)
             hist = stock.history(period="1mo")
             if hist.empty:
@@ -70,6 +72,7 @@ def draw_stock_chart(symbol):
         plt.savefig(path)
         plt.close()
         print(f"✅ 成功產生圖表：{path}")
+        print(f"📁 實際儲存位置 = {os.path.abspath(path)}")
         return path
 
     except Exception as e:
