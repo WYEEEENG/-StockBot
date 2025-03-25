@@ -5,3 +5,4 @@ requests
 twstock
 yfinance
 line-bot-sdk
+lxml
