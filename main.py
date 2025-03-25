@@ -143,7 +143,9 @@ def scheduled_push():
                     )
         except Exception as e:
             print(f"推播給 {uid} 失敗：{e}")
-
+if __name__ == "__main__":
+    import stock_utils
+    stock_utils.draw_stock_chart("2330")
 # --- 啟動排程器 ---
 scheduler = BackgroundScheduler()
 scheduler.add_job(scheduled_push, "cron", hour=11, minute=0)
