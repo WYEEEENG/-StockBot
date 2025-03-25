@@ -11,6 +11,10 @@ from linebot.models import (
 from linebot.exceptions import InvalidSignatureError
 import stock_utils
 
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="charts"), name="static")
+
 # Load environment variables
 load_dotenv()
 
