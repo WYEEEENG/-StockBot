@@ -3,6 +3,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import datetime
 import os
+print(f"▶️ 開始畫圖：{symbol}")
 
 def get_taiwan_stock(stock_id):
     try:
