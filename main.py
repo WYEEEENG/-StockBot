@@ -6,19 +6,19 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
-    FollowEvent
+    FollowEvent, ImageSendMessage
 )
 from linebot.exceptions import InvalidSignatureError
 import stock_utils
 import re
 from fastapi.staticfiles import StaticFiles
 
+# 初始化 FastAPI 並掛載靜態圖表路徑
+app = FastAPI()
 app.mount("/static", StaticFiles(directory="charts"), name="static")
 
-# Load environment variables
+# 載入 .env 設定
 load_dotenv()
-
-app = FastAPI()
 
 CHANNEL_SECRET = os.getenv("CHANNEL_SECRET")
 CHANNEL_ACCESS_TOKEN = os.getenv("CHANNEL_ACCESS_TOKEN")
@@ -54,7 +54,6 @@ async def callback(request: Request):
         return {"status": "invalid signature"}
     return {"status": "ok"}
 
-
 # --- 處理加好友事件 ---
 @handler.add(FollowEvent)
 def handle_follow(event: FollowEvent):
@@ -65,14 +64,13 @@ def handle_follow(event: FollowEvent):
         TextSendMessage(text="✅ 你已成功訂閱每日股市通知！傳 2330 或 TSLA 試試看")
     )
 
-
 # --- 處理訊息事件 ---
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event: MessageEvent):
     msg = event.message.text.strip().upper()
     user_id = event.source.user_id
 
-    # 👉 特殊指令：顯示自己的 ID
+    # 👉 顯示自己的 ID
     if msg == "我的ID":
         line_bot_api.reply_message(
             event.reply_token,
@@ -80,17 +78,16 @@ def handle_message(event: MessageEvent):
         )
         return
 
-    # 👉 判斷是否為「股票 + 關鍵字」的輸入
+    # 👉 判斷是否為「股票 + 關鍵字」
     trigger_words = ["交易紀錄", "走勢", "圖表", "CHART", "股價圖"]
     for keyword in trigger_words:
         if keyword in msg:
-              # ← 放在檔案最上方（只要一次）
+            symbol = re.sub(rf"{keyword}", "", msg, flags=re.IGNORECASE)
+            symbol = re.sub(r"[^\w]", "", symbol).upper()
+            print(f"⏳ 嘗試查詢圖表 symbol = {symbol}")
 
-            symbol = re.sub(rf"{keyword}", "", msg, flags=re.IGNORECASE)  # 移除關鍵字
-            symbol = re.sub(r"[^\w]", "", symbol).upper()  # 只保留英數
             chart_path = stock_utils.draw_stock_chart(symbol)
             if chart_path:
-                # 靜態圖片網址
                 url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/static/{symbol}.png"
                 image_message = ImageSendMessage(
                     original_content_url=url,
@@ -104,15 +101,13 @@ def handle_message(event: MessageEvent):
                 )
             return
 
-    # 👉 單一股票代碼查詢（純價格）
+    # 👉 股票價格查詢（純文字）
     if msg.isdigit():
         result = stock_utils.get_taiwan_stock(msg)
     else:
         result = stock_utils.get_us_stock(msg)
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=result))
-
-
 
 # --- 定時推播任務 ---
 def scheduled_push():
@@ -125,7 +120,6 @@ def scheduled_push():
     us_stocks = ["TSLA", "VOO", "NVDA"]
     messages = []
 
-    # 產文字
     for code in tw_stocks:
         messages.append(stock_utils.get_taiwan_stock(code))
     for code in us_stocks:
@@ -133,13 +127,9 @@ def scheduled_push():
 
     text_summary = "\n\n".join(messages)
 
-    # 推播給所有使用者
     for uid in users:
         try:
-            # 先傳文字
             line_bot_api.push_message(uid, TextSendMessage(text=text_summary))
-
-            # 再一張一張圖傳
             for code in tw_stocks + us_stocks:
                 img_path = stock_utils.draw_stock_chart(code)
                 if img_path:
@@ -153,8 +143,6 @@ def scheduled_push():
                     )
         except Exception as e:
             print(f"推播給 {uid} 失敗：{e}")
-
-
 
 # --- 啟動排程器 ---
 scheduler = BackgroundScheduler()
