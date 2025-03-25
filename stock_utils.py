@@ -1,8 +1,14 @@
 import twstock
 import yfinance as yf
 import matplotlib.pyplot as plt
+import matplotlib
 import datetime
 import os
+
+# 使用支援中文字體
+matplotlib.rcParams['font.family'] = 'sans-serif'
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial Unicode MS']
+
 
 def get_taiwan_stock(stock_id):
     try:
@@ -32,7 +38,7 @@ def draw_stock_chart(symbol):
     try:
         print(f"▶️ 開始畫圖：{symbol}")
         is_tw = symbol.isdigit()
-        plt.figure(figsize=(8, 4))
+        plt.figure(figsize=(10, 5))
         today = datetime.date.today()
 
         dates = []
