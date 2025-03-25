@@ -70,21 +70,45 @@ def handle_follow(event: FollowEvent):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event: MessageEvent):
     msg = event.message.text.strip().upper()
+    user_id = event.source.user_id
 
+    # 👉 特殊指令：顯示自己的 ID
     if msg == "我的ID":
-        uid = event.source.user_id
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=f"你的 User ID 是：\n{uid}")
+            TextSendMessage(text=f"你的 User ID 是：\n{user_id}")
         )
         return
 
+    # 👉 判斷是否為「股票 + 關鍵字」的輸入
+    trigger_words = ["交易紀錄", "走勢", "圖表", "CHART", "股價圖"]
+    for keyword in trigger_words:
+        if keyword in msg:
+            symbol = msg.replace(keyword, "").strip()
+            chart_path = stock_utils.draw_stock_chart(symbol)
+            if chart_path:
+                # 靜態圖片網址
+                url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/static/{symbol}.png"
+                image_message = ImageSendMessage(
+                    original_content_url=url,
+                    preview_image_url=url
+                )
+                line_bot_api.reply_message(event.reply_token, image_message)
+            else:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="⚠️ 無法產生圖表，可能代碼有誤或資料不足")
+                )
+            return
+
+    # 👉 單一股票代碼查詢（純價格）
     if msg.isdigit():
         result = stock_utils.get_taiwan_stock(msg)
     else:
         result = stock_utils.get_us_stock(msg)
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=result))
+
 
 
 # --- 定時推播任務 ---
