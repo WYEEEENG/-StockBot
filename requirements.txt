@@ -6,3 +6,5 @@ twstock
 yfinance
 line-bot-sdk
 lxml
+matplotlib
+apscheduler
