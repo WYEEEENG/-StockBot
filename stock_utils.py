@@ -4,10 +4,22 @@ import matplotlib.pyplot as plt
 import matplotlib
 import datetime
 import os
+import matplotlib.font_manager
 
-# 使用支援中文字體
+# ✅ 使用支援中文字體（含 Linux Render 環境相容）
 matplotlib.rcParams['font.family'] = 'sans-serif'
-matplotlib.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial Unicode MS']
+matplotlib.rcParams['font.sans-serif'] = [
+    'Noto Sans CJK TC',  # Google 雲端環境常見中文字體
+    'Microsoft JhengHei', 'SimHei', 'Arial Unicode MS', 'sans-serif'
+]
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 🔍 印出目前可用字體（一次列出方便 Debug）
+print("\n🔍 可用中文字體：")
+fonts = sorted({matplotlib.font_manager.FontProperties(fname=fp).get_name(): fp 
+                for fp in matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')})
+for name in fonts:
+    print(f" - {name}")
 
 
 def get_taiwan_stock(stock_id):
