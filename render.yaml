@@ -2,10 +2,12 @@ services:
   - type: web
     name: line-stock-bot
     runtime: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
     envVars:
       - key: CHANNEL_SECRET
-        sync: false
+        fromEnv: CHANNEL_SECRET
       - key: CHANNEL_ACCESS_TOKEN
-        sync: false
+        fromEnv: CHANNEL_ACCESS_TOKEN
+      - key: RENDER_EXTERNAL_HOSTNAME
+        fromEnv: RENDER_EXTERNAL_HOSTNAME
