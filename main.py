@@ -87,8 +87,10 @@ def handle_message(event: MessageEvent):
             print(f"⏳ 嘗試查詢圖表 symbol = {symbol}")
 
             chart_path = stock_utils.draw_stock_chart(symbol)
+            print(f"📊 圖表產出結果：{chart_path}")
             if chart_path:
                 url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/static/{symbol}.png"
+                print(f"🔗 圖片網址：{url}")
                 image_message = ImageSendMessage(
                     original_content_url=url,
                     preview_image_url=url
@@ -143,9 +145,11 @@ def scheduled_push():
                     )
         except Exception as e:
             print(f"推播給 {uid} 失敗：{e}")
+
+# --- 開發測試：本地執行畫圖 ---
 if __name__ == "__main__":
-    import stock_utils
     stock_utils.draw_stock_chart("2330")
+
 # --- 啟動排程器 ---
 scheduler = BackgroundScheduler()
 scheduler.add_job(scheduled_push, "cron", hour=11, minute=0)
